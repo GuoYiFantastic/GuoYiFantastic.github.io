@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Yifan Guo — PhD student at The Chinese University of Hong Kong, working on large language model architectures, pre-training, and machine learning systems.">
+  <meta name="color-scheme" content="light">
+  <title>Yifan Guo</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23111827'/%3E%3Cpath d='M15 17h8l9 16 9-16h8L36 40v8h-8v-8z' fill='%23fff'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #ffffff;
+      --text: #171717;
+      --muted: #666a73;
+      --line: #dedfe3;
+      --link: #255ca8;
+      --soft: #f5f6f8;
+      --page-width: 760px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 17px;
+      line-height: 1.68;
+      text-rendering: optimizeLegibility;
+    }
+
+    a {
+      color: var(--link);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    a:hover { text-decoration-thickness: 2px; }
+
+    a:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--link) 35%, transparent);
+      outline-offset: 3px;
+      border-radius: 2px;
+    }
+
+    .page {
+      width: min(calc(100% - 40px), var(--page-width));
+      margin: 0 auto;
+      padding: 72px 0 80px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 176px;
+      align-items: center;
+      gap: 48px;
+      padding-bottom: 42px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .portrait {
+      display: block;
+      width: 176px;
+      aspect-ratio: 3 / 4;
+      object-fit: cover;
+      object-position: 50% 30%;
+      border-radius: 3px;
+      filter: saturate(0.88) contrast(1.02);
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2.45rem, 8vw, 4rem);
+      font-weight: 500;
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+
+    .name-cn {
+      margin-left: 0.28em;
+      color: var(--muted);
+      font-family: "Songti SC", SimSun, serif;
+      font-size: 0.45em;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      vertical-align: 0.15em;
+    }
+
+    .role {
+      margin: 0 0 18px;
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      font-size: 0.94rem;
+    }
+
+    main { padding-top: 8px; }
+
+    section {
+      padding: 40px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    section:last-child { border-bottom: 0; }
+
+    h2 {
+      margin: 0 0 16px;
+      font-size: 0.9rem;
+      font-weight: 650;
+      line-height: 1.4;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+    }
+
+    p { margin: 0; }
+
+    p + p { margin-top: 13px; }
+
+    .muted { color: var(--muted); }
+
+    .research-list,
+    .honors-list {
+      margin: 0;
+      padding-left: 1.15em;
+    }
+
+    .research-list li,
+    .honors-list li { padding-left: 0.22em; }
+
+    .research-list li + li,
+    .honors-list li + li { margin-top: 5px; }
+
+    .publication + .publication { margin-top: 30px; }
+
+    .publication-title {
+      margin: 0;
+      font-weight: 620;
+      line-height: 1.45;
+    }
+
+    .publication-meta {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .publication-venue {
+      display: block;
+      margin-top: 3px;
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .publication-link {
+      display: block;
+      width: fit-content;
+      margin-top: 3px;
+    }
+
+    .publication-tldr {
+      margin-top: 11px;
+      color: var(--text);
+      font-size: 0.94rem;
+      line-height: 1.6;
+    }
+
+    .publication-tldr strong { font-weight: 650; }
+
+    .publication-note {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    footer {
+      padding-top: 24px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 620px) {
+      .page {
+        width: min(calc(100% - 32px), var(--page-width));
+        padding-top: 42px;
+      }
+
+      header {
+        grid-template-columns: minmax(0, 1fr) 112px;
+        gap: 22px;
+        padding-bottom: 32px;
+      }
+
+      .portrait { width: 112px; }
+
+      section {
+        padding: 32px 0;
+      }
+    }
+
+    @media print {
+      :root { color-scheme: light; }
+      .page { width: 100%; padding: 0; }
+      a { color: inherit; }
+      footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header>
+      <div>
+        <h1>Yifan Guo <span class="name-cn" lang="zh-CN">郭一凡</span></h1>
+        <p class="role">First-year PhD student at The Chinese University of Hong Kong</p>
+        <div class="links" aria-label="Contact links">
+          <a href="mailto:yfguo26@cse.cuhk.edu.hk">yfguo26@cse.cuhk.edu.hk</a>
+        </div>
+      </div>
+      <img class="portrait" src="biguanfeng.jpg" alt="Portrait of Yifan Guo" width="176" height="235">
+    </header>
+
+    <main>
+      <section id="about" aria-labelledby="about-heading">
+        <h2 id="about-heading">About</h2>
+        <div>
+          <p>
+            I am a first-year PhD student at The Chinese University of Hong Kong,
+            advised by <a href="https://wyliu.com/" rel="noopener noreferrer">Prof. Weiyang Liu</a>. I received my bachelor's degree with honors
+            from the School of Integrated Circuits and Zhiyuan College at Shanghai Jiao Tong University.
+          </p>
+          <p>
+            Previously, I was a research intern at Microsoft Research Asia (MSRA).
+          </p>
+        </div>
+      </section>
+
+      <section id="research" aria-labelledby="research-heading">
+        <h2 id="research-heading">Research</h2>
+        <div>
+          <ul class="research-list">
+            <li>Large language model architectures and pre-training</li>
+            <li>Machine learning systems</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="publications" aria-labelledby="publications-heading">
+        <h2 id="publications-heading">Publications</h2>
+        <div>
+          <article class="publication">
+            <p class="publication-title">
+              Breaking the Exactness Barrier: Interleaved DeepSeek Sparse Attention for Efficient Long Context Reasoning
+            </p>
+            <p class="publication-meta">
+              <strong>Yifan Guo</strong>, Wei Cui
+              <span class="publication-venue">NeurIPS 2026</span>
+            </p>
+            <p class="publication-tldr">
+              <strong>TL;DR:</strong> Top-k selection in sparse attention is difficult to optimize in distributed systems because it introduces global dependencies. We interleave the context across GPUs and perform top-k selection locally on each GPU, eliminating the global dependency.
+              <span class="publication-note">Blog post coming soon.</span>
+            </p>
+          </article>
+
+          <article class="publication">
+            <p class="publication-title">
+              SEDG: Stitch-Compatible End-to-End Layout Decomposition Based on Graph Neural Network
+            </p>
+            <p class="publication-meta">
+              <strong>Yifan Guo</strong>, Jiawei Chen, Yexin Li, Yunxiang Zhang, Qing Zhang, Yuhang Zhang, Yongfu Li
+              <a class="publication-link" href="https://ieeexplore.ieee.org/document/10992777" rel="noopener noreferrer">Paper</a>
+              <span class="publication-venue">DATE 2025</span>
+            </p>
+            <p class="publication-tldr">
+              <strong>TL;DR:</strong> Layout decomposition is an important step in chip manufacturing. We explore a more efficient decomposition method using heterogeneous graph neural networks.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section id="honors" aria-labelledby="honors-heading">
+        <h2 id="honors-heading">Honors</h2>
+        <div>
+          <ul class="honors-list">
+            <li>Shanghai Outstanding Graduate</li>
+            <li>National Scholarship</li>
+            <li>Shanghai Jiao Tong University Class-A Scholarship</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      © <span id="year">2026</span> Yifan Guo
+    </footer>
+  </div>
+
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
