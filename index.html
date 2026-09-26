@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="en">
 <head>
@@ -180,13 +179,6 @@
 
     .publication-tldr strong { font-weight: 650; }
 
-    .publication-note {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-style: italic;
-    }
-
     footer {
       padding-top: 24px;
       color: var(--muted);
@@ -267,11 +259,11 @@
             </p>
             <p class="publication-meta">
               <strong>Yifan Guo</strong>, Wei Cui
+              <a class="publication-link" href="blog/interleaved-dsa/">Blog</a>
               <span class="publication-venue">NeurIPS 2026</span>
             </p>
             <p class="publication-tldr">
               <strong>TL;DR:</strong> Top-k selection in sparse attention is difficult to optimize in distributed systems because it introduces global dependencies. We interleave the context across GPUs and perform top-k selection locally on each GPU, eliminating the global dependency.
-              <span class="publication-note">Blog post coming soon.</span>
             </p>
           </article>
 

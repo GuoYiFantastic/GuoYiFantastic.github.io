@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Interleaved DeepSeek Sparse Attention removes the global top-k dependency from context-parallel sparse attention." />
+  <title>Interleaved DeepSeek Sparse Attention · Yifan Guo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --background: #fff;
+      --text: #000;
+      --line: #dedfe3;
+      --reading: 760px;
+      --media: 1040px;
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 17px;
+      line-height: 1.72;
+      text-rendering: optimizeLegibility;
+    }
+    a {
+      color: var(--text);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+    .page {
+      width: min(calc(100% - 40px), var(--reading));
+      margin: 0 auto;
+      padding: 38px 0 72px;
+    }
+    .site-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 24px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--line);
+      font-size: 13px;
+    }
+    .site-header a {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      text-decoration: none;
+    }
+    .article-header {
+      max-width: 700px;
+      margin: 74px auto 58px;
+      text-align: center;
+    }
+    .category {
+      margin: 0 0 12px;
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 4.2vw, 2.4rem);
+      font-weight: 500;
+      line-height: 1.14;
+      letter-spacing: -.025em;
+    }
+    .subtitle {
+      max-width: 600px;
+      margin: 17px auto 0;
+      font-size: 17px;
+      line-height: 1.55;
+    }
+    .meta { margin: 18px 0 0; font-size: 13px; }
+    .standfirst {
+      margin: 0 0 38px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      font-style: italic;
+      line-height: 1.62;
+    }
+    p { margin: 0; }
+    p + p { margin-top: 18px; }
+    h2 {
+      margin: 58px 0 18px;
+      font-size: 1.52rem;
+      font-weight: 650;
+      line-height: 1.3;
+      letter-spacing: -.01em;
+    }
+    h3 {
+      margin: 28px 0 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+    .media {
+      width: min(calc(100vw - 48px), var(--media));
+      margin: 34px 0 42px 50%;
+      transform: translateX(-50%);
+    }
+    .media svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    svg text {
+      fill: #000;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    svg rect { stroke-width: 1.2 !important; }
+    figcaption {
+      margin-top: 11px;
+      padding-top: 10px;
+      border-top: 1px solid var(--line);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 42px;
+    }
+    .comparison figure { margin: 0; }
+    .comparison h3 { margin-top: 0; }
+    blockquote {
+      margin: 30px 0;
+      padding-left: 22px;
+      border-left: 2px solid #000;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      line-height: 1.62;
+    }
+    .equation {
+      margin: 30px 0;
+      padding: 25px 12px;
+      overflow-x: auto;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+      text-align: center;
+    }
+    .equation.long math { font-size: 1.05rem; }
+    math {
+      color: #000;
+      font-family: "Cambria Math", "STIX Two Math", "Times New Roman", serif;
+      font-size: 1.35rem;
+    }
+    .symbols {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 18px;
+      margin: -12px 0 34px;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .symbols b {
+      display: block;
+      margin-bottom: 2px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+    }
+    .closing {
+      margin-top: 62px;
+      padding-top: 28px;
+      border-top: 1px solid var(--line);
+    }
+    .references {
+      margin-top: 54px;
+      padding-top: 22px;
+      border-top: 1px solid var(--line);
+      font-size: 17px;
+      line-height: 1.72;
+    }
+    footer {
+      margin-top: 56px;
+      padding-top: 20px;
+      border-top: 1px solid var(--line);
+      font-size: 12px;
+    }
+    @media (max-width: 760px) {
+      .page { width: min(calc(100% - 32px), var(--reading)); padding-top: 28px; }
+      .article-header { margin-top: 52px; }
+      .media { width: calc(100vw - 32px); overflow-x: auto; }
+      .media > svg { min-width: 720px; }
+      .comparison { grid-template-columns: 1fr; gap: 36px; }
+      .comparison svg { min-width: 520px; }
+      .symbols { grid-template-columns: 1fr 1fr; }
+      math { font-size: 1.08rem; }
+    }
+    @media print {
+      .page { width: 100%; padding: 0; }
+      .site-header, footer { display: none; }
+      .media { width: 100%; margin-left: 0; transform: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header">
+      <a href="https://guoyifantastic.github.io/">Yifan Guo</a>
+      <span>Research notes</span>
+    </header>
+
+    <main>
+      <article>
+        <header class="article-header">
+          <p class="category">Sparse attention</p>
+          <h1>Interleaved DeepSeek Sparse Attention</h1>
+        </header>
+
+        <p class="standfirst">DeepSeek Sparse Attention turns long-context attention into a token-level retrieval problem. The attention itself becomes sparse, but exact top-k selection introduces a global dependency that is difficult to scale across context-parallel GPUs.</p>
+
+        <p>Block-sparse attention selects groups of tokens. With block size <i>B</i>, a highly tuned selector examines roughly <i>N/B</i> candidates. DSA is finer-grained: it ranks individual tokens and therefore examines <i>N</i> candidates. As context grows, the ranking path can become a first-order contributor to time-to-first-token.</p>
+
+        <h2>Where DSA spends its work</h2>
+        <p>DSA separates selection from attention. A lightweight indexer scores the historical sequence and returns token indices. Sparse MLA then gathers only the selected rows from its latent KV cache. This saves attention work, while leaving the indexer responsible for scanning the sequence.</p>
+
+        <figure class="media">
+          <svg viewBox="0 0 1120 390" role="img" aria-labelledby="dsaTitle dsaDesc">
+              <title id="dsaTitle">DeepSeek Sparse Attention dataflow</title>
+              <desc id="dsaDesc">The current hidden state creates indexer queries and MLA queries. The indexer scores the sequence, selects top-k token indices, and Sparse MLA gathers only those KV rows.</desc>
+              <defs>
+                <marker id="arr1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#000"/></marker>
+              </defs>
+              <rect x="20" y="132" width="145" height="104" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="92" y="175" text-anchor="middle" font-size="18" font-weight="750">hidden state</text>
+              <text x="92" y="201" text-anchor="middle" font-size="14">x<tspan baseline-shift="sub">t</tspan></text>
+
+              <path d="M165 184 H218 V82 H270" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr1)"/>
+              <path d="M165 184 H218 V285 H270" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr1)"/>
+
+              <rect x="270" y="28" width="184" height="108" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="292" y="58" font-size="11" font-weight="800" letter-spacing="1.2">INDEXER</text>
+              <text x="292" y="87" font-size="18" font-weight="750">score all tokens</text>
+              <text x="292" y="112" font-size="13">q<tspan baseline-shift="sub">I</tspan> · k<tspan baseline-shift="sub">I</tspan> + token gates</text>
+
+              <rect x="508" y="28" width="170" height="108" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="530" y="58" font-size="11" font-weight="800" letter-spacing="1.2">SELECTION</text>
+              <text x="530" y="88" font-size="22" font-weight="780">top-k</text>
+              <text x="530" y="114" font-size="13">token IDs, not KV</text>
+              <line x1="454" y1="82" x2="508" y2="82" stroke="#000" stroke-width="2" marker-end="url(#arr1)"/>
+
+              <rect x="270" y="231" width="184" height="108" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="292" y="261" font-size="11" font-weight="800" letter-spacing="1.2">MLA PATH</text>
+              <text x="292" y="290" font-size="18" font-weight="750">compressed KV</text>
+              <text x="292" y="315" font-size="13">latent cache for all tokens</text>
+
+              <rect x="732" y="130" width="208" height="124" fill="#fff" stroke="#000" stroke-width="3"/>
+              <text x="756" y="164" font-size="11" font-weight="800" letter-spacing="1.2">SPARSE MLA</text>
+              <text x="756" y="195" font-size="20" font-weight="780">gather selected KV</text>
+              <text x="756" y="222" font-size="13">attention over k rows</text>
+              <path d="M678 82 H706 V166 H732" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr1)"/>
+              <path d="M454 285 H706 V218 H732" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr1)"/>
+
+              <rect x="988" y="151" width="112" height="82" rx="41" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="1044" y="187" text-anchor="middle" font-size="17" font-weight="800">output</text>
+              <text x="1044" y="211" text-anchor="middle" font-size="13">o<tspan baseline-shift="sub">t</tspan></text>
+              <line x1="940" y1="192" x2="988" y2="192" stroke="#000" stroke-width="2" marker-end="url(#arr1)"/>
+
+              <text x="593" y="358" text-anchor="middle" font-size="13">The score path decides where the attention path reads.</text>
+            </svg>
+          <figcaption><b>Figure 1.</b> The indexer decides which historical token IDs Sparse MLA reads. The scoring path and the attention path use separate representations.</figcaption>
+        </figure>
+
+        <p>This distinction matters in a distributed system. When context is split across GPUs, each card sees only a local shard. It can identify its own strongest candidates, but it cannot know which of them belong to the global top-k.</p>
+
+        <h2>The exactness barrier</h2>
+        <p>The conventional solution has two ranking stages. Every GPU computes a local top-k, the candidates are gathered, and a second top-k selects the global winners. The second stage is exact, but it also forms a synchronization barrier: communication must complete before sparse attention can begin.</p>
+
+        <figure class="media">
+          <svg viewBox="0 0 1120 420" role="img" aria-labelledby="globalTitle globalDesc">
+              <title id="globalTitle">Global top-k bottleneck</title>
+              <desc id="globalDesc">Four GPUs each run local top-k. Their candidates are gathered and ranked a second time to produce global top-k for Sparse MLA.</desc>
+              <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#000"/></marker></defs>
+              <text x="20" y="28" font-size="12" font-weight="800" letter-spacing="1">CONTEXT SHARDS</text>
+              <g font-size="14">
+                <rect x="20" y="58" width="205" height="72" fill="#fff" stroke="#000" stroke-width="2"/><text x="42" y="88" font-weight="750">GPU 0 · C<tspan baseline-shift="sub">0</tspan></text><text x="42" y="111">local top-k</text>
+                <rect x="20" y="146" width="205" height="72" fill="#fff" stroke="#000" stroke-width="2"/><text x="42" y="176" font-weight="750">GPU 1 · C<tspan baseline-shift="sub">1</tspan></text><text x="42" y="199">local top-k</text>
+                <rect x="20" y="234" width="205" height="72" fill="#fff" stroke="#000" stroke-width="2"/><text x="42" y="264" font-weight="750">GPU 2 · C<tspan baseline-shift="sub">2</tspan></text><text x="42" y="287">local top-k</text>
+                <rect x="20" y="322" width="205" height="72" fill="#fff" stroke="#000" stroke-width="2"/><text x="42" y="352" font-weight="750">GPU 3 · C<tspan baseline-shift="sub">3</tspan></text><text x="42" y="375">local top-k</text>
+              </g>
+              <path d="M225 94 H326 V194 H382" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr2)"/>
+              <path d="M225 182 H382" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr2)"/>
+              <path d="M225 270 H326 V218 H382" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr2)"/>
+              <path d="M225 358 H306 V242 H382" fill="none" stroke="#000" stroke-width="2" marker-end="url(#arr2)"/>
+              <rect x="382" y="143" width="190" height="116" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="477" y="178" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="1">ALL-GATHER</text>
+              <text x="477" y="210" text-anchor="middle" font-size="20" font-weight="780">G × k candidates</text>
+              <text x="477" y="235" text-anchor="middle" font-size="13">scores + global token IDs</text>
+              <line x1="572" y1="201" x2="650" y2="201" stroke="#000" stroke-width="2" marker-end="url(#arr2)"/>
+              <rect x="650" y="143" width="190" height="116" fill="#fff" stroke="#000" stroke-width="3"/>
+              <text x="745" y="178" text-anchor="middle" font-size="12" font-weight="800" letter-spacing="1">SECOND RANKING</text>
+              <text x="745" y="210" text-anchor="middle" font-size="22" font-weight="800">global top-k</text>
+              <text x="745" y="235" text-anchor="middle" font-size="13">synchronizing decision</text>
+              <line x1="840" y1="201" x2="918" y2="201" stroke="#000" stroke-width="2" marker-end="url(#arr2)"/>
+              <rect x="918" y="159" width="182" height="84" fill="#fff" stroke="#000" stroke-width="2"/>
+              <text x="1009" y="192" text-anchor="middle" font-size="17" font-weight="780">Sparse MLA</text>
+              <text x="1009" y="218" text-anchor="middle" font-size="13">exact k indices</text>
+              <path d="M624 115 v172" stroke="#000" stroke-width="1.5" stroke-dasharray="7 7"/>
+              <text x="624" y="315" text-anchor="middle" font-size="13" font-weight="750">global dependency barrier</text>
+              <text x="624" y="337" text-anchor="middle" font-size="12">communication must finish before exact ranking can finish</text>
+            </svg>
+          <figcaption><b>Figure 2.</b> Exact distributed selection gathers <i>G × k</i> candidates and ranks them again. The second ranking stage creates the global dependency.</figcaption>
+        </figure>
+
+        <p>This barrier is especially visible at low batch size and long sequence length. Those are precisely the settings where context parallelism is useful for reducing latency and distributing KV storage.</p>
+
+        <h2>The observation behind the relaxation</h2>
+        <p>To look for a way around this barrier, I start from one observation in our experiments: <i>k = 2048</i> is a training setting, but it is not necessarily the best inference setting. Model quality improves as inference-time k increases. The improvement is steep before 2048, then continues more slowly toward full attention.</p>
+
+        <figure class="media">
+          <svg viewBox="0 0 1120 440" role="img" aria-labelledby="curveTitle curveDesc">
+              <title id="curveTitle">Qualitative performance curve over top-k</title>
+              <desc id="curveDesc">Performance rises quickly before k equals 2048 and more slowly after, approaching full attention at sequence length.</desc>
+              <line x1="105" y1="350" x2="1035" y2="350" stroke="#000" stroke-width="2"/>
+              <line x1="105" y1="350" x2="105" y2="55" stroke="#000" stroke-width="2"/>
+              <text x="570" y="415" text-anchor="middle" font-size="16" font-weight="750">inference-time k</text>
+              <text x="22" y="210" text-anchor="middle" font-size="16" font-weight="750" transform="rotate(-90 22 210)">model performance</text>
+              <path d="M120 330 C230 310 315 230 405 164 C485 105 560 86 650 76 C785 61 910 56 1012 54" fill="none" stroke="#000" stroke-width="4"/>
+              <line x1="520" y1="350" x2="520" y2="96" stroke="#000" stroke-width="1.5" stroke-dasharray="7 7"/>
+              <circle cx="520" cy="96" r="8" fill="#fff" stroke="#000" stroke-width="3"/>
+              <text x="520" y="380" text-anchor="middle" font-size="15" font-weight="800">2048</text>
+              <text x="175" y="380" text-anchor="middle" font-size="14">512</text>
+              <text x="1012" y="380" text-anchor="middle" font-size="14">sequence length</text>
+              <text x="1012" y="400" text-anchor="middle" font-size="12">full attention</text>
+              <path d="M72 350 l13 -8 l-8 16 l13 -8" fill="none" stroke="#000" stroke-width="1.5"/>
+              <path d="M786 350 l13 -8 l-8 16 l13 -8" fill="none" stroke="#000" stroke-width="1.5"/>
+              <text x="279" y="104" text-anchor="middle" font-size="14" font-weight="750">fast gain</text>
+              <line x1="279" y1="117" x2="350" y2="180" stroke="#000" stroke-width="1.5"/>
+              <text x="802" y="115" text-anchor="middle" font-size="14" font-weight="750">slower gain</text>
+              <line x1="802" y1="128" x2="762" y2="65" stroke="#000" stroke-width="1.5"/>
+            </svg>
+          <figcaption><b>Figure 3.</b> Qualitative form of the observed trend. This diagram communicates the shape of the observation and does not encode measured values.</figcaption>
+        </figure>
+
+        <p>My hypothesis comes from the training history of DeepSeek-V3.2. The model was not sparse from scratch; it was continuously pretrained from a full-attention base model. How strongly it adapts to sparsity should therefore depend on the relative training intensity of these two stages:</p>
+
+        <div class="equation long">
+          <math display="block" aria-label="The ratio between sparse adaptation training intensity and base model pretraining intensity">
+            <mfrac>
+              <mrow><mtext>training intensity of continued pretraining for sparse adaptation</mtext></mrow>
+              <mrow><mtext>training intensity of first-stage pretraining for the full-attention base model</mtext></mrow>
+            </mfrac>
+          </math>
+        </div>
+
+        <p>When this ratio is limited, sparse adaptation changes how the model retrieves context without completely removing the full-sequence perception inherited from the base model. This gives a plausible reason why increasing k at inference time can still help.</p>
+
+        <blockquote>Can we deliberately include some additional, less important tokens outside exact top-k, while preserving high recall of the important tokens inside top-k?</blockquote>
+
+        <p>If the answer is yes, we no longer need an exact global boundary. We can relax the candidate set, remove the second global top-k, and break the distributed dependency barrier.</p>
+
+        <h2>Local top-m, then one gather</h2>
+        <p>Interleaved DSA asks every GPU for a smaller local top-m set. The sets are gathered and their union is passed directly to Sparse MLA. There is no second global ranking stage. The union can be larger than k, but it avoids placing an exact top-k decision on the critical path.</p>
+
+        <div class="media comparison">
+          <figure>
+            <h3>Exact distributed DSA</h3>
+            <svg viewBox="0 0 520 460" role="img" aria-label="Exact distributed DSA with local top-k, gather, and second top-k">
+                <defs><marker id="arr3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#000"/></marker></defs>
+                <g font-size="13" text-anchor="middle">
+                  <rect x="20" y="38" width="100" height="58" fill="#fff" stroke="#000"/><text x="70" y="63" font-weight="750">GPU 0</text><text x="70" y="82">top-k</text>
+                  <rect x="143" y="38" width="100" height="58" fill="#fff" stroke="#000"/><text x="193" y="63" font-weight="750">GPU 1</text><text x="193" y="82">top-k</text>
+                  <rect x="266" y="38" width="100" height="58" fill="#fff" stroke="#000"/><text x="316" y="63" font-weight="750">GPU 2</text><text x="316" y="82">top-k</text>
+                  <rect x="389" y="38" width="100" height="58" fill="#fff" stroke="#000"/><text x="439" y="63" font-weight="750">GPU 3</text><text x="439" y="82">top-k</text>
+                </g>
+                <path d="M70 96 V150 H260" fill="none" stroke="#000" stroke-width="1.8"/><path d="M193 96 V150" fill="none" stroke="#000" stroke-width="1.8"/><path d="M316 96 V150" fill="none" stroke="#000" stroke-width="1.8"/><path d="M439 96 V150 H260" fill="none" stroke="#000" stroke-width="1.8"/>
+                <line x1="260" y1="150" x2="260" y2="184" stroke="#000" stroke-width="2" marker-end="url(#arr3a)"/>
+                <rect x="144" y="184" width="232" height="78" fill="#fff" stroke="#000" stroke-width="2"/><text x="260" y="216" text-anchor="middle" font-size="15" font-weight="800">all-gather G × k</text><text x="260" y="241" text-anchor="middle" font-size="13">candidate pool</text>
+                <line x1="260" y1="262" x2="260" y2="298" stroke="#000" stroke-width="2" marker-end="url(#arr3a)"/>
+                <rect x="144" y="298" width="232" height="72" fill="#fff" stroke="#000" stroke-width="3"/><text x="260" y="341" text-anchor="middle" font-size="16" font-weight="800">second top-k</text>
+                <line x1="260" y1="370" x2="260" y2="406" stroke="#000" stroke-width="2" marker-end="url(#arr3a)"/>
+                <text x="260" y="436" text-anchor="middle" font-size="15" font-weight="750">Sparse MLA · k tokens</text>
+              </svg>
+            <figcaption>Local top-k → gather <i>G × k</i> candidates → second top-k → Sparse MLA.</figcaption>
+          </figure>
+          <figure>
+            <h3>Interleaved DSA</h3>
+            <svg viewBox="0 0 520 460" role="img" aria-label="Interleaved DSA with local top-m and a direct union passed to Sparse MLA">
+                <defs><marker id="arr3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10Z" fill="#000"/></marker></defs>
+                <g font-size="13" text-anchor="middle">
+                  <rect x="20" y="38" width="100" height="58" fill="#fff" stroke="#000" stroke-width="2"/><text x="70" y="63" font-weight="800">GPU 0</text><text x="70" y="82">top-m</text>
+                  <rect x="143" y="38" width="100" height="58" fill="#fff" stroke="#000" stroke-width="2"/><text x="193" y="63" font-weight="800">GPU 1</text><text x="193" y="82">top-m</text>
+                  <rect x="266" y="38" width="100" height="58" fill="#fff" stroke="#000" stroke-width="2"/><text x="316" y="63" font-weight="800">GPU 2</text><text x="316" y="82">top-m</text>
+                  <rect x="389" y="38" width="100" height="58" fill="#fff" stroke="#000" stroke-width="2"/><text x="439" y="63" font-weight="800">GPU 3</text><text x="439" y="82">top-m</text>
+                </g>
+                <path d="M70 96 V150 H260" fill="none" stroke="#000" stroke-width="1.8"/><path d="M193 96 V150" fill="none" stroke="#000" stroke-width="1.8"/><path d="M316 96 V150" fill="none" stroke="#000" stroke-width="1.8"/><path d="M439 96 V150 H260" fill="none" stroke="#000" stroke-width="1.8"/>
+                <line x1="260" y1="150" x2="260" y2="184" stroke="#000" stroke-width="2" marker-end="url(#arr3b)"/>
+                <rect x="116" y="184" width="288" height="86" fill="#fff" stroke="#000" stroke-width="3"/><text x="260" y="217" text-anchor="middle" font-size="15" font-weight="800">all-gather union</text><text x="260" y="242" text-anchor="middle" font-size="13">≤ G × m token indices</text>
+                <line x1="260" y1="270" x2="260" y2="320" stroke="#000" stroke-width="3" marker-end="url(#arr3b)"/>
+                <rect x="116" y="320" width="288" height="88" fill="#fff" stroke="#000" stroke-width="3"/>
+                <text x="260" y="354" text-anchor="middle" font-size="16" font-weight="800">Sparse MLA directly</text>
+                <text x="260" y="382" text-anchor="middle" font-size="13">no global second top-k</text>
+                <text x="260" y="439" text-anchor="middle" font-size="14" font-weight="750">extra tokens are the relaxation</text>
+              </svg>
+            <figcaption>Local top-m → gather the union → Sparse MLA directly.</figcaption>
+          </figure>
+        </div>
+
+        <p>The useful operating point is the smallest m that retains the global top-k with a chosen confidence. Smaller m reduces both selection work and communication; larger m gives more recall margin.</p>
+
+        <h2>Why interleaving matters</h2>
+        <p>Important context is not uniformly distributed. Attention often concentrates on contiguous semantic regions. With contiguous context shards, one GPU can receive most of a relevant region and therefore most of the global winners. A fixed local m then becomes either unsafe for that GPU or wastefully large for every other GPU.</p>
+
+        <p>Round-robin interleaving assigns token <i>i</i> to GPU <i>i mod G</i>. Contiguous neighborhoods are spread across cards, making the number of important tokens per GPU more balanced.</p>
+
+        <figure class="media">
+          <svg viewBox="0 0 1120 480" role="img" aria-labelledby="intTitle intDesc">
+              <title id="intTitle">Contiguous and interleaved context placement</title>
+              <desc id="intDesc">A clustered important region falls mostly on one GPU with contiguous placement, but is distributed across all GPUs with interleaved placement.</desc>
+              <defs>
+                <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#000" stroke-width="2"/></pattern>
+              </defs>
+              <text x="20" y="35" font-size="12" font-weight="800" letter-spacing="1">SEQUENCE · IMPORTANT REGION IS HATCHED</text>
+              <g>
+                <rect x="20" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="74" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="128" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="182" y="62" width="54" height="42" fill="#fff" stroke="#000"/>
+                <rect x="236" y="62" width="54" height="42" fill="url(#hatch)" stroke="#000"/><rect x="290" y="62" width="54" height="42" fill="url(#hatch)" stroke="#000"/><rect x="344" y="62" width="54" height="42" fill="url(#hatch)" stroke="#000"/><rect x="398" y="62" width="54" height="42" fill="url(#hatch)" stroke="#000"/><rect x="452" y="62" width="54" height="42" fill="url(#hatch)" stroke="#000"/><rect x="506" y="62" width="54" height="42" fill="url(#hatch)" stroke="#000"/>
+                <rect x="560" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="614" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="668" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="722" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="776" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="830" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="884" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="938" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="992" y="62" width="54" height="42" fill="#fff" stroke="#000"/><rect x="1046" y="62" width="54" height="42" fill="#fff" stroke="#000"/>
+              </g>
+
+              <text x="20" y="159" font-size="13" font-weight="800">CONTIGUOUS</text>
+              <g font-size="13" text-anchor="middle">
+                <rect x="20" y="180" width="250" height="80" fill="#fff" stroke="#000" stroke-width="2"/><text x="145" y="213" font-weight="750">GPU 0 · tokens 0–4</text><text x="145" y="239">1 important</text>
+                <rect x="290" y="180" width="250" height="80" fill="url(#hatch)" stroke="#000" stroke-width="3"/><text x="415" y="213" font-weight="800">GPU 1 · tokens 5–9</text><text x="415" y="239" font-weight="750">5 important</text>
+                <rect x="560" y="180" width="250" height="80" fill="#fff" stroke="#000" stroke-width="2"/><text x="685" y="213" font-weight="750">GPU 2 · tokens 10–14</text><text x="685" y="239">0 important</text>
+                <rect x="830" y="180" width="250" height="80" fill="#fff" stroke="#000" stroke-width="2"/><text x="955" y="213" font-weight="750">GPU 3 · tokens 15–19</text><text x="955" y="239">0 important</text>
+              </g>
+              <text x="20" y="319" font-size="13" font-weight="800">INTERLEAVED · token i → GPU (i mod G)</text>
+              <g font-size="13">
+                <rect x="20" y="340" width="250" height="92" fill="#fff" stroke="#000" stroke-width="2"/><text x="42" y="372" font-weight="800">GPU 0</text><text x="42" y="398">0 · 4 · 8 · 12 · 16</text><text x="42" y="419">1–2 important</text>
+                <rect x="290" y="340" width="250" height="92" fill="#fff" stroke="#000" stroke-width="2"/><text x="312" y="372" font-weight="800">GPU 1</text><text x="312" y="398">1 · 5 · 9 · 13 · 17</text><text x="312" y="419">1–2 important</text>
+                <rect x="560" y="340" width="250" height="92" fill="#fff" stroke="#000" stroke-width="2"/><text x="582" y="372" font-weight="800">GPU 2</text><text x="582" y="398">2 · 6 · 10 · 14 · 18</text><text x="582" y="419">1–2 important</text>
+                <rect x="830" y="340" width="250" height="92" fill="#fff" stroke="#000" stroke-width="2"/><text x="852" y="372" font-weight="800">GPU 3</text><text x="852" y="398">3 · 7 · 11 · 15 · 19</text><text x="852" y="419">1–2 important</text>
+              </g>
+              <text x="550" y="467" text-anchor="middle" font-size="13">Interleaving converts spatial clustering into a more balanced per-GPU candidate load.</text>
+            </svg>
+          <figcaption><b>Figure 4.</b> Interleaving converts a spatially clustered important region into a more balanced per-GPU candidate load.</figcaption>
+        </figure>
+
+        <h2>Choosing the local list size</h2>
+        <p>Let <i>G</i> be the number of GPUs, <i>C</i> the complete context, <i>C<sub>g</sub></i> the tokens assigned to GPU g, <i>K</i> the desired global top-k, and <i>γ</i> the target coverage confidence. We require the union of local top-m sets to cover the global top-k:</p>
+
+        <div class="equation">
+          <math display="block" aria-label="The probability that global top K is contained in the union of local top m sets is greater than gamma">
+            <mi mathvariant="normal">P</mi><mo>(</mo>
+            <mi mathvariant="normal">Top</mi><mo>(</mo><mi>C</mi><mo>,</mo><mi>K</mi><mo>)</mo>
+            <mo>⊆</mo>
+            <munderover><mo>⋃</mo><mrow><mi>g</mi><mo>=</mo><mn>0</mn></mrow><mrow><mi>G</mi><mo>−</mo><mn>1</mn></mrow></munderover>
+            <mi mathvariant="normal">Top</mi><mo>(</mo><msub><mi>C</mi><mi>g</mi></msub><mo>,</mo><mi>m</mi><mo>)</mo>
+            <mo>)</mo><mo>&gt;</mo><mi>γ</mi>
+          </math>
+        </div>
+
+        <div class="symbols">
+          <div><b>G</b>number of GPUs</div>
+          <div><b>C</b>complete context</div>
+          <div><b>C<sub>g</sub></b>context on GPU g</div>
+          <div><b>K</b>global top-k</div>
+          <div><b>γ</b>coverage confidence</div>
+        </div>
+
+        <p>Writing <i>m = K/G + ε</i>, the goal is to minimize the safety margin ε while satisfying the coverage constraint. Under the probability model in our derivation, the local list size can be estimated as:</p>
+
+        <div class="equation">
+          <math display="block" aria-label="Closed form estimate for local list size m">
+            <mi>m</mi><mo>=</mo><mo>⌈</mo>
+            <mfrac><mi>K</mi><mi>G</mi></mfrac><mo>+</mo>
+            <msub>
+              <mi>Z</mi>
+              <mrow><mn>1</mn><mo>−</mo><mfrac><mrow><mn>1</mn><mo>−</mo><mi>γ</mi></mrow><mi>G</mi></mfrac></mrow>
+            </msub>
+            <mo>·</mo>
+            <mfrac>
+              <msqrt><mrow><mi>K</mi><mo>(</mo><mi>G</mi><mo>−</mo><mn>1</mn><mo>)</mo></mrow></msqrt>
+              <mi>G</mi>
+            </mfrac>
+            <mo>+</mo><mn>0.5</mn><mo>⌉</mo>
+          </math>
+        </div>
+
+        <p>Interleaving supports this estimate by making the load-balancing assumption more plausible when attention is locally clustered. The algorithm replaces a globally exact boundary with a probabilistic coverage guarantee, while Sparse MLA still receives the token indices it needs.</p>
+
+        <p class="closing"><b>The systems trade-off is simple:</b> admit a controlled number of extra candidates so that sparse attention no longer waits for a global second top-k.</p>
+
+        <div class="references">
+          <b>Further reading.</b> The full derivation and experiments are available in the early <a href="https://openreview.net/pdf?id=s3kae9DXni">workshop paper</a>. The latest camera-ready version for NeurIPS 2026 is forthcoming.
+        </div>
+      </article>
+    </main>
+
+    <footer>© 2026 Yifan Guo</footer>
+  </div>
+</body>
+</html>
