@@ -170,6 +170,18 @@
       margin-top: 3px;
     }
 
+    .publication-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 3px;
+    }
+
+    .publication-links .publication-link {
+      display: inline;
+      margin-top: 0;
+    }
+
     .publication-tldr {
       margin-top: 11px;
       color: var(--text);
@@ -222,7 +234,7 @@
           <a href="mailto:yfguo26@cse.cuhk.edu.hk">yfguo26@cse.cuhk.edu.hk</a>
         </div>
       </div>
-      <img class="portrait" src="biguanfeng.jpg" alt="Portrait of Yifan Guo" width="176" height="235">
+      <img class="portrait" src="assets/images/biguanfeng.jpg" alt="Portrait of Yifan Guo" width="176" height="235">
     </header>
 
     <main>
@@ -259,7 +271,10 @@
             </p>
             <p class="publication-meta">
               <strong>Yifan Guo</strong>, Wei Cui
-              <a class="publication-link" href="blog/interleaved-dsa/">Blog</a>
+              <span class="publication-links">
+                <a class="publication-link" href="assets/slides/IDSA-HUAWEI.pdf">Slides</a>
+                <a class="publication-link" href="blog/interleaved-dsa/">Blog</a>
+              </span>
               <span class="publication-venue">NeurIPS 2026</span>
             </p>
             <p class="publication-tldr">
